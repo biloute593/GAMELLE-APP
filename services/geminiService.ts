@@ -9,12 +9,15 @@ const getAiClient = (): GoogleGenAI => {
     if (ai) {
         return ai;
     }
-    if (!process.env.API_KEY) {
+    // Safely access the API key to prevent a crash in browser environments where 'process' is not defined.
+    const apiKey = (typeof process !== 'undefined' && process.env) ? process.env.API_KEY : undefined;
+
+    if (!apiKey) {
         // This error will be caught by the calling functions and displayed as a user-facing error.
         // It prevents the entire application from crashing if the API_KEY is not set.
-        throw new Error("La clé API Gemini n'est pas configurée.");
+        throw new Error("La clé API Gemini n'est pas configurée ou accessible.");
     }
-    ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    ai = new GoogleGenAI({ apiKey });
     return ai;
 };
 
@@ -78,8 +81,8 @@ export const generateDishIdeas = async (ingredients: string, cuisine: string): P
 
   } catch (error) {
     console.error("Error generating dish ideas:", error);
-    // Re-throw with a more user-friendly message
-    throw new Error("Impossible de générer des idées. Vérifiez la configuration de l'API.");
+    // Re-throw the original error to propagate the specific message to the UI.
+    throw error;
   }
 };
 
@@ -140,6 +143,7 @@ export const searchDishes = async (query: string, dishes: Dish[]): Promise<{ mat
 
     } catch (error) {
         console.error("Error searching dishes:", error);
-        throw new Error("La recherche a échoué. Vérifiez la configuration de l'API.");
+        // Re-throw the original error to propagate the specific message to the UI.
+        throw error;
     }
 }
